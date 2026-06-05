@@ -2,16 +2,23 @@
 Imports System.Text.Json
 
 Public Class Form1
-    Private ReadOnly httpClient As New HttpClient()
-    Private apiBaseUrl As String = "https://www.samuelezranas.codes/api"
+    ' Inisialisasi Service
+    Private _apiService As ApiService
     Private currentPage As String = "Dashboard"
 
+    ' TODO: Ganti dengan URL dan Anon Key Supabase portofoliomu sendiri
+    Private Const SUPABASE_URL As String = "https://jnioqbsqbodsmqzwcgqz.supabase.co"
+    Private Const SUPABASE_KEY As String = "sb_publishable_gmEmuBGVgPTU8-rP02HIzQ_E2R1Twfh"
+
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Set dark theme
+        ' 1. Inisialisasi API Service
+        _apiService = New ApiService(SUPABASE_URL, SUPABASE_KEY)
+
+        ' 2. Atur Tema Dark Mode (Sesuai desain awalmu)
         Me.BackColor = Color.FromArgb(25, 12, 35)
         Me.ForeColor = Color.White
 
-        ' Setup navigation buttons
+        ' 3. Setup Tombol Navigasi
         Dim navButtons = {btnDashboard, btnAbout, btnCertification, btnPortfolio, btnContact}
         For Each btn In navButtons
             btn.BackColor = Color.Transparent
@@ -22,49 +29,58 @@ Public Class Form1
             AddHandler btn.Click, AddressOf NavButton_Click
         Next
 
-        ' Setup action buttons
+        ' 4. Setup Tombol Aksi Tambahan
         btnRefresh.Cursor = Cursors.Hand
         btnGoToWebsite.Cursor = Cursors.Hand
         btnLogout.Cursor = Cursors.Hand
 
-        ' Load dashboard
+        ' 5. Load Halaman Pertama (Dashboard)
         ShowDashboard()
     End Sub
 
-    Private Sub NavButton_Click(sender As Object, e As EventArgs)
+    ' --- LOGIKA NAVIGASI ---
+
+    Private Async Sub NavButton_Click(sender As Object, e As EventArgs)
         Dim button = CType(sender, Button)
         currentPage = button.Name.Replace("btn", "")
+
+        ' Reset semua warna background tombol navigasi menjadi transparan
+        ResetNavButtons()
+        ' Beri warna aktif pada tombol yang sedang diklik
+        button.BackColor = Color.FromArgb(100, 50, 100)
+
+        ' Panggil halaman yang sesuai secara asinkron
         Select Case currentPage
             Case "Dashboard"
                 ShowDashboard()
             Case "About"
-                ShowAbout()
+                Await ShowAbout()
             Case "Certification"
-                ShowCertification()
+                Await ShowCertification()
             Case "Portfolio"
-                ShowPortfolio()
+                Await ShowPortfolio()
             Case "Contact"
-                ShowContact()
+                Await ShowContact()
         End Select
     End Sub
+
+    Private Sub ResetNavButtons()
+        Dim navButtons = {btnDashboard, btnAbout, btnCertification, btnPortfolio, btnContact}
+        For Each btn In navButtons
+            btn.BackColor = Color.Transparent
+        Next
+    End Sub
+
+    ' --- HALAMAN DINAMIS (KONEKSI SUPABASE) ---
 
     Private Sub ShowDashboard()
         pnlContent.Controls.Clear()
         currentPage = "Dashboard"
-        btnDashboard.BackColor = Color.FromArgb(100, 50, 100)
-        btnAbout.BackColor = Color.Transparent
-        btnCertification.BackColor = Color.Transparent
-        btnPortfolio.BackColor = Color.Transparent
-        btnContact.BackColor = Color.Transparent
 
-        Dim panel = New Panel With {
-            .Dock = DockStyle.Fill,
-            .AutoScroll = True,
-            .BackColor = Color.FromArgb(25, 12, 35)
-        }
+        Dim panel = CreateBasePanel()
 
         Dim titleLabel = New Label With {
-            .Text = "📊 Google Analytics",
+            .Text = "📊 Google Analytics & Stats",
             .Font = New Font("Segoe UI", 20, FontStyle.Bold),
             .ForeColor = Color.White,
             .Location = New Point(40, 40),
@@ -72,10 +88,11 @@ Public Class Form1
         }
         panel.Controls.Add(titleLabel)
 
+        ' Untuk stats, nanti kamu bisa buat endpoint counter atau passing jumlah list .Count ke sini
         Dim statPanel1 = CreateStatCard("About Photos", "3", New Point(40, 120))
-        Dim statPanel2 = CreateStatCard("Certifications", "16", New Point(320, 120))
-        Dim statPanel3 = CreateStatCard("Portfolio Projects", "10", New Point(600, 120))
-        Dim statPanel4 = CreateStatCard("Messages", "3", New Point(880, 120))
+        Dim statPanel2 = CreateStatCard("Certifications", "...", New Point(320, 120))
+        Dim statPanel3 = CreateStatCard("Portfolio Projects", "...", New Point(600, 120))
+        Dim statPanel4 = CreateStatCard("Messages", "...", New Point(880, 120))
 
         panel.Controls.Add(statPanel1)
         panel.Controls.Add(statPanel2)
@@ -83,7 +100,7 @@ Public Class Form1
         panel.Controls.Add(statPanel4)
 
         Dim noteLabel = New Label With {
-            .Text = "GA4_PROPERTY_ID belum ditur di environment Vercel.",
+            .Text = "GA4_PROPERTY_ID belum diatur di environment Vercel.",
             .Font = New Font("Segoe UI", 11),
             .ForeColor = Color.Yellow,
             .Location = New Point(40, 280),
@@ -96,20 +113,20 @@ Public Class Form1
         pnlContent.Controls.Add(panel)
     End Sub
 
-    Private Sub ShowAbout()
+    Private Async Function ShowAbout() As Task
         pnlContent.Controls.Clear()
         currentPage = "About"
-        btnDashboard.BackColor = Color.Transparent
-        btnAbout.BackColor = Color.FromArgb(100, 50, 100)
-        btnCertification.BackColor = Color.Transparent
-        btnPortfolio.BackColor = Color.Transparent
-        btnContact.BackColor = Color.Transparent
 
-        Dim panel = New Panel With {
-            .Dock = DockStyle.Fill,
-            .AutoScroll = True,
-            .BackColor = Color.FromArgb(25, 12, 35)
-        }
+        Dim panel = CreateBasePanel()
+        pnlContent.Controls.Add(panel)
+
+        ' Tampilkan indikator loading sederhana
+        Dim loadingLbl = New Label With {.Text = "Loading About data...", .Location = New Point(40, 100), .ForeColor = Color.Gray, .AutoSize = True}
+        panel.Controls.Add(loadingLbl)
+
+        ' Ambil data asli dari Supabase
+        Dim aboutData = Await _apiService.GetAboutAsync()
+        panel.Controls.Remove(loadingLbl)
 
         Dim titleLabel = New Label With {
             .Text = "About Settings",
@@ -120,68 +137,12 @@ Public Class Form1
         }
         panel.Controls.Add(titleLabel)
 
-        ' Title field
-        Dim titleLbl = New Label With {
-            .Text = "Title:",
-            .Font = New Font("Segoe UI", 11),
-            .ForeColor = Color.White,
-            .Location = New Point(40, 100)
-        }
-        titleLbl.AutoSize = True
-        panel.Controls.Add(titleLbl)
+        ' Membuat input field menggunakan helper generator
+        Dim titleTxt = CreateInput("Title:", aboutData.Title, 100, panel)
+        Dim descTxt = CreateInput("Lead:", aboutData.Lead, 180, panel, True)
+        Dim linkTxt = CreateInput("Resume URL:", aboutData.ResumeUrl, 350, panel)
 
-        Dim titleTxt = New TextBox With {
-            .Text = "Hello, everyone. This is Samuel Ezra.",
-            .Location = New Point(40, 130),
-            .Size = New Size(500, 35),
-            .BackColor = Color.FromArgb(50, 25, 50),
-            .ForeColor = Color.White,
-            .BorderStyle = BorderStyle.FixedSingle
-        }
-        panel.Controls.Add(titleTxt)
-
-        ' Description field
-        Dim descLbl = New Label With {
-            .Text = "Description:",
-            .Font = New Font("Segoe UI", 11),
-            .ForeColor = Color.White,
-            .Location = New Point(40, 180)
-        }
-        descLbl.AutoSize = True
-        panel.Controls.Add(descLbl)
-
-        Dim descTxt = New TextBox With {
-            .Text = "I am an Information Technology undergraduate focused on software engineering, interface design, and visual storytelling. I enjoy building products that are both technically strong and visually memorable...",
-            .Location = New Point(40, 210),
-            .Size = New Size(500, 120),
-            .BackColor = Color.FromArgb(50, 25, 50),
-            .ForeColor = Color.White,
-            .BorderStyle = BorderStyle.FixedSingle,
-            .Multiline = True
-        }
-        panel.Controls.Add(descTxt)
-
-        ' Social Link
-        Dim linkLbl = New Label With {
-            .Text = "Social Link:",
-            .Font = New Font("Segoe UI", 11),
-            .ForeColor = Color.White,
-            .Location = New Point(40, 350)
-        }
-        linkLbl.AutoSize = True
-        panel.Controls.Add(linkLbl)
-
-        Dim linkTxt = New TextBox With {
-            .Text = "https://drive.google.com/",
-            .Location = New Point(40, 380),
-            .Size = New Size(500, 35),
-            .BackColor = Color.FromArgb(50, 25, 50),
-            .ForeColor = Color.White,
-            .BorderStyle = BorderStyle.FixedSingle
-        }
-        panel.Controls.Add(linkTxt)
-
-        ' Save button
+        ' Tombol Simpan
         Dim saveBtn = New Button With {
             .Text = "💾 Save About",
             .Location = New Point(40, 440),
@@ -192,25 +153,32 @@ Public Class Form1
             .Font = New Font("Segoe UI", 12, FontStyle.Bold),
             .Cursor = Cursors.Hand
         }
+
+        ' Event handler klik untuk mengupdate data ke Supabase
+        AddHandler saveBtn.Click, Async Sub()
+                                      saveBtn.Enabled = False
+                                      saveBtn.Text = "⌛ Saving..."
+
+                                      aboutData.Title = titleTxt.Text
+                                      aboutData.Lead = descTxt.Text
+                                      aboutData.ResumeUrl = linkTxt.Text
+
+                                      Dim success = Await _apiService.UpdateAboutAsync(aboutData)
+                                      MessageBox.Show(If(success, "Data About berhasil diperbarui!", "Gagal memperbarui data."))
+
+                                      saveBtn.Enabled = True
+                                      saveBtn.Text = "💾 Save About"
+                                  End Sub
+
         panel.Controls.Add(saveBtn)
+    End Function
 
-        pnlContent.Controls.Add(panel)
-    End Sub
-
-    Private Sub ShowCertification()
+    Private Async Function ShowCertification() As Task
         pnlContent.Controls.Clear()
         currentPage = "Certification"
-        btnDashboard.BackColor = Color.Transparent
-        btnAbout.BackColor = Color.Transparent
-        btnCertification.BackColor = Color.FromArgb(100, 50, 100)
-        btnPortfolio.BackColor = Color.Transparent
-        btnContact.BackColor = Color.Transparent
 
-        Dim panel = New Panel With {
-            .Dock = DockStyle.Fill,
-            .AutoScroll = True,
-            .BackColor = Color.FromArgb(25, 12, 35)
-        }
+        Dim panel = CreateBasePanel()
+        pnlContent.Controls.Add(panel)
 
         Dim titleLabel = New Label With {
             .Text = "📜 List Sertifikat",
@@ -221,16 +189,6 @@ Public Class Form1
         }
         panel.Controls.Add(titleLabel)
 
-        Dim descLabel = New Label With {
-            .Text = "Gunakan tombol Tambah untuk membuat data sertifikat baru.",
-            .Font = New Font("Segoe UI", 11),
-            .ForeColor = Color.Gray,
-            .Location = New Point(40, 90),
-            .Size = New Size(600, 30)
-        }
-        panel.Controls.Add(descLabel)
-
-        ' Add button
         Dim addBtn = New Button With {
             .Text = "➕ Tambah",
             .Location = New Point(1100, 40),
@@ -243,38 +201,43 @@ Public Class Form1
         }
         panel.Controls.Add(addBtn)
 
-        ' Sample certificates
-        Dim certs = {
-            New With {.Name = "Pengenalan ke Logika Pemrograman (Programming Logic 101)", .Organization = "Dicoding Indonesia", .Year = 2024, .Order = 0},
-            New With {.Name = "Belajar Dasar Visualisasi Data", .Organization = "Dicoding Academy", .Year = 2024, .Order = 0},
-            New With {.Name = "Belajar Dasar AI", .Organization = "Dicoding Academy", .Year = 2024, .Order = 0},
-            New With {.Name = "Belajar Dasar Structured Query Language (SQL)", .Organization = "Dicoding", .Year = 2024, .Order = 0}
-        }
+        ' Ambil list sertifikat asli dari Supabase
+        Dim certs = Await _apiService.GetCertificationsAsync()
 
         Dim yPos = 150
         For Each cert In certs
-            Dim certPanel = CreateCertificateCard(cert.Name, cert.Organization & " · " & cert.Year, cert.Order, New Point(40, yPos))
+            Dim certPanel = CreateCertificateCard(cert.Title, cert.Issuer & " · " & cert.Year, cert.SortOrder, New Point(40, yPos))
+
+            ' Menambahkan tombol hapus di setiap kartu secara dinamis
+            Dim delBtn = New Button With {
+                .Text = "🗑️ Delete",
+                .Location = New Point(930, 105),
+                .Size = New Size(80, 35),
+                .BackColor = Color.FromArgb(150, 50, 50),
+                .ForeColor = Color.White,
+                .FlatStyle = FlatStyle.Flat,
+                .Cursor = Cursors.Hand
+            }
+
+            AddHandler delBtn.Click, Async Sub()
+                                         If MessageBox.Show("Hapus sertifikat: " & cert.Title & "?", "Konfirmasi Hapus", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) = DialogResult.Yes Then
+                                             Await _apiService.DeleteCertificationAsync(cert.Id)
+                                             Await ShowCertification() ' Refresh halaman setelah menghapus
+                                         End If
+                                     End Sub
+
+            certPanel.Controls.Add(delBtn)
             panel.Controls.Add(certPanel)
             yPos += 200
         Next
+    End Function
 
-        pnlContent.Controls.Add(panel)
-    End Sub
-
-    Private Sub ShowPortfolio()
+    Private Async Function ShowPortfolio() As Task
         pnlContent.Controls.Clear()
         currentPage = "Portfolio"
-        btnDashboard.BackColor = Color.Transparent
-        btnAbout.BackColor = Color.Transparent
-        btnCertification.BackColor = Color.Transparent
-        btnPortfolio.BackColor = Color.FromArgb(100, 50, 100)
-        btnContact.BackColor = Color.Transparent
 
-        Dim panel = New Panel With {
-            .Dock = DockStyle.Fill,
-            .AutoScroll = True,
-            .BackColor = Color.FromArgb(25, 12, 35)
-        }
+        Dim panel = CreateBasePanel()
+        pnlContent.Controls.Add(panel)
 
         Dim titleLabel = New Label With {
             .Text = "💼 Portfolio Projects",
@@ -285,44 +248,22 @@ Public Class Form1
         }
         panel.Controls.Add(titleLabel)
 
-        ' Add button
-        Dim addBtn = New Button With {
-            .Text = "➕ Tambah",
-            .Location = New Point(1100, 40),
-            .Size = New Size(120, 45),
-            .BackColor = Color.FromArgb(100, 150, 100),
-            .ForeColor = Color.White,
-            .FlatStyle = FlatStyle.Flat,
-            .Font = New Font("Segoe UI", 11, FontStyle.Bold),
-            .Cursor = Cursors.Hand
-        }
-        panel.Controls.Add(addBtn)
+        Dim portfolios = Await _apiService.GetPortfoliosAsync()
 
-        ' Sample projects
         Dim yPos = 130
-        For i = 1 To 3
-            Dim projectPanel = CreateProjectCard("Project " & i, "Description of project " & i, New Point(40, yPos))
+        For Each item In portfolios
+            Dim projectPanel = CreateProjectCard(item.Title, item.Description, New Point(40, yPos))
             panel.Controls.Add(projectPanel)
             yPos += 180
         Next
+    End Function
 
-        pnlContent.Controls.Add(panel)
-    End Sub
-
-    Private Sub ShowContact()
+    Private Async Function ShowContact() As Task
         pnlContent.Controls.Clear()
         currentPage = "Contact"
-        btnDashboard.BackColor = Color.Transparent
-        btnAbout.BackColor = Color.Transparent
-        btnCertification.BackColor = Color.Transparent
-        btnPortfolio.BackColor = Color.Transparent
-        btnContact.BackColor = Color.FromArgb(100, 50, 100)
 
-        Dim panel = New Panel With {
-            .Dock = DockStyle.Fill,
-            .AutoScroll = True,
-            .BackColor = Color.FromArgb(25, 12, 35)
-        }
+        Dim panel = CreateBasePanel()
+        pnlContent.Controls.Add(panel)
 
         Dim titleLabel = New Label With {
             .Text = "💬 Messages",
@@ -333,16 +274,43 @@ Public Class Form1
         }
         panel.Controls.Add(titleLabel)
 
-        ' Messages list
+        Dim messages = Await _apiService.GetMessagesAsync()
+
         Dim yPos = 120
-        For i = 1 To 3
-            Dim msgPanel = CreateMessageCard("Sender Name " & i, "Message subject " & i, "This is a sample message from a visitor...", New Point(40, yPos))
+        For Each msg In messages
+            Dim msgPanel = CreateMessageCard(msg.Name, msg.Email, msg.Message, New Point(40, yPos))
             panel.Controls.Add(msgPanel)
             yPos += 180
         Next
+    End Function
 
-        pnlContent.Controls.Add(panel)
-    End Sub
+    ' --- UTILITY & GENERIC GENERATORS ---
+
+    Private Function CreateBasePanel() As Panel
+        Return New Panel With {
+            .Dock = DockStyle.Fill,
+            .AutoScroll = True,
+            .BackColor = Color.FromArgb(25, 12, 35)
+        }
+    End Function
+
+    Private Function CreateInput(labelText As String, value As String, yPos As Integer, parent As Panel, Optional isMultiline As Boolean = False) As TextBox
+        Dim lbl = New Label With {.Text = labelText, .Location = New Point(40, yPos), .AutoSize = True, .Font = New Font("Segoe UI", 11), .ForeColor = Color.White}
+        Dim txt = New TextBox With {
+            .Text = value,
+            .Location = New Point(40, yPos + 30),
+            .Size = New Size(500, If(isMultiline, 120, 35)),
+            .BackColor = Color.FromArgb(50, 25, 50),
+            .ForeColor = Color.White,
+            .Multiline = isMultiline,
+            .BorderStyle = BorderStyle.FixedSingle
+        }
+        parent.Controls.Add(lbl)
+        parent.Controls.Add(txt)
+        Return txt
+    End Function
+
+    ' --- CARD UI COMPONENTS ---
 
     Private Function CreateStatCard(title As String, value As String, location As Point) As Panel
         Dim card = New Panel With {
@@ -423,7 +391,7 @@ Public Class Form1
         }
         card.Controls.Add(orderLbl)
 
-        ' Up button
+        ' Tombol Up dan Down bawaan UI kamu tetap dipertahankan
         Dim upBtn = New Button With {
             .Text = "⬆ Up",
             .Location = New Point(15, 105),
@@ -436,7 +404,6 @@ Public Class Form1
         }
         card.Controls.Add(upBtn)
 
-        ' Down button
         Dim downBtn = New Button With {
             .Text = "⬇ Down",
             .Location = New Point(105, 105),
@@ -449,7 +416,6 @@ Public Class Form1
         }
         card.Controls.Add(downBtn)
 
-        ' Status badge
         Dim statusBadge = New Label With {
             .Text = "Active",
             .Font = New Font("Segoe UI", 9),
@@ -498,7 +464,6 @@ Public Class Form1
         }
         card.Controls.Add(descLbl)
 
-        ' Edit button
         Dim editBtn = New Button With {
             .Text = "✏️ Edit",
             .Location = New Point(15, 95),
@@ -510,19 +475,6 @@ Public Class Form1
             .Cursor = Cursors.Hand
         }
         card.Controls.Add(editBtn)
-
-        ' Delete button
-        Dim delBtn = New Button With {
-            .Text = "🗑️ Delete",
-            .Location = New Point(105, 95),
-            .Size = New Size(80, 35),
-            .BackColor = Color.FromArgb(150, 50, 50),
-            .ForeColor = Color.White,
-            .FlatStyle = FlatStyle.Flat,
-            .Font = New Font("Segoe UI", 9),
-            .Cursor = Cursors.Hand
-        }
-        card.Controls.Add(delBtn)
 
         Return card
     End Function
@@ -569,7 +521,6 @@ Public Class Form1
         }
         card.Controls.Add(msgLbl)
 
-        ' Reply button
         Dim replyBtn = New Button With {
             .Text = "↩️ Reply",
             .Location = New Point(15, 120),
@@ -585,19 +536,15 @@ Public Class Form1
         Return card
     End Function
 
-    Private Sub btnRefresh_Click(sender As Object, e As EventArgs) Handles btnRefresh.Click
-        ' Refresh current page
+    ' --- GLOBAL ACTION BUTTONS ---
+
+    Private Async Sub btnRefresh_Click(sender As Object, e As EventArgs) Handles btnRefresh.Click
         Select Case currentPage
-            Case "Dashboard"
-                ShowDashboard()
-            Case "About"
-                ShowAbout()
-            Case "Certification"
-                ShowCertification()
-            Case "Portfolio"
-                ShowPortfolio()
-            Case "Contact"
-                ShowContact()
+            Case "Dashboard" : ShowDashboard()
+            Case "About" : Await ShowAbout()
+            Case "Certification" : Await ShowCertification()
+            Case "Portfolio" : Await ShowPortfolio()
+            Case "Contact" : Await ShowContact()
         End Select
     End Sub
 
@@ -608,14 +555,13 @@ Public Class Form1
                 .UseShellExecute = True
             })
         Catch ex As Exception
-            MessageBox.Show("Failed to open website: " & ex.Message)
+            MessageBox.Show("Gagal membuka website: " & ex.Message)
         End Try
     End Sub
 
     Private Sub btnLogout_Click(sender As Object, e As EventArgs) Handles btnLogout.Click
-        If MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+        If MessageBox.Show("Apakah kamu yakin ingin keluar?", "Konfirmasi Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
             Application.Exit()
         End If
     End Sub
-
 End Class

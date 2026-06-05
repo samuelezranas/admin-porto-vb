@@ -1,6 +1,14 @@
+Imports System.Text.Json.Serialization
+
 Public Class AboutModel
-    Public Property Id As String
+    <JsonPropertyName("id")>
+    Public Property Id As Integer
+    <JsonPropertyName("title")>
     Public Property Title As String
-    Public Property Description As String
-    Public Property SocialLink As String
+    <JsonPropertyName("lead")>
+    Public Property Lead As String
+    <JsonPropertyName("resume_url")>
+    Public Property ResumeUrl As String
+    <JsonPropertyName("updated_at")>
+    Public Property UpdatedAt As DateTime?
 End Class

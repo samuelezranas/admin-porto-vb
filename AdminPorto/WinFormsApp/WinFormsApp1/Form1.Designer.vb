@@ -22,7 +22,6 @@ Partial Class Form1
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Form1))
         pnlHeader = New Panel()
         pnlHeaderRight = New Panel()
         btnLogout = New Button()
@@ -43,13 +42,13 @@ Partial Class Form1
         ' 
         ' pnlHeader
         ' 
-        pnlHeader.BackColor = Color.FromArgb(25, 12, 35)
+        pnlHeader.BackColor = Color.FromArgb(CByte(25), CByte(12), CByte(35))
         pnlHeader.Controls.Add(pnlHeaderRight)
         pnlHeader.Controls.Add(lblTitle)
         pnlHeader.Dock = DockStyle.Top
         pnlHeader.Location = New Point(0, 0)
         pnlHeader.Name = "pnlHeader"
-        pnlHeader.Size = New Size(1280, 90)
+        pnlHeader.Size = New Size(1383, 90)
         pnlHeader.TabIndex = 0
         ' 
         ' pnlHeaderRight
@@ -58,7 +57,7 @@ Partial Class Form1
         pnlHeaderRight.Controls.Add(btnLogout)
         pnlHeaderRight.Controls.Add(btnGoToWebsite)
         pnlHeaderRight.Controls.Add(btnRefresh)
-        pnlHeaderRight.Location = New Point(780, 25)
+        pnlHeaderRight.Location = New Point(883, 25)
         pnlHeaderRight.Name = "pnlHeaderRight"
         pnlHeaderRight.Size = New Size(480, 50)
         pnlHeaderRight.TabIndex = 1
@@ -67,10 +66,10 @@ Partial Class Form1
         ' 
         btnLogout.BackColor = Color.Transparent
         btnLogout.Cursor = Cursors.Hand
-        btnLogout.FlatAppearance.BorderColor = Color.FromArgb(150, 80, 150)
+        btnLogout.FlatAppearance.BorderColor = Color.FromArgb(CByte(150), CByte(80), CByte(150))
         btnLogout.FlatAppearance.BorderSize = 2
         btnLogout.FlatStyle = FlatStyle.Flat
-        btnLogout.Font = New Font("Segoe UI", 10, FontStyle.Bold)
+        btnLogout.Font = New Font("Segoe UI", 10F, FontStyle.Bold)
         btnLogout.ForeColor = Color.White
         btnLogout.Location = New Point(320, 5)
         btnLogout.Name = "btnLogout"
@@ -83,10 +82,10 @@ Partial Class Form1
         ' 
         btnGoToWebsite.BackColor = Color.Transparent
         btnGoToWebsite.Cursor = Cursors.Hand
-        btnGoToWebsite.FlatAppearance.BorderColor = Color.FromArgb(150, 80, 150)
+        btnGoToWebsite.FlatAppearance.BorderColor = Color.FromArgb(CByte(150), CByte(80), CByte(150))
         btnGoToWebsite.FlatAppearance.BorderSize = 2
         btnGoToWebsite.FlatStyle = FlatStyle.Flat
-        btnGoToWebsite.Font = New Font("Segoe UI", 10, FontStyle.Bold)
+        btnGoToWebsite.Font = New Font("Segoe UI", 10F, FontStyle.Bold)
         btnGoToWebsite.ForeColor = Color.White
         btnGoToWebsite.Location = New Point(165, 5)
         btnGoToWebsite.Name = "btnGoToWebsite"
@@ -99,10 +98,10 @@ Partial Class Form1
         ' 
         btnRefresh.BackColor = Color.Transparent
         btnRefresh.Cursor = Cursors.Hand
-        btnRefresh.FlatAppearance.BorderColor = Color.FromArgb(150, 80, 150)
+        btnRefresh.FlatAppearance.BorderColor = Color.FromArgb(CByte(150), CByte(80), CByte(150))
         btnRefresh.FlatAppearance.BorderSize = 2
         btnRefresh.FlatStyle = FlatStyle.Flat
-        btnRefresh.Font = New Font("Segoe UI", 10, FontStyle.Bold)
+        btnRefresh.Font = New Font("Segoe UI", 10F, FontStyle.Bold)
         btnRefresh.ForeColor = Color.White
         btnRefresh.Location = New Point(10, 5)
         btnRefresh.Name = "btnRefresh"
@@ -114,17 +113,17 @@ Partial Class Form1
         ' lblTitle
         ' 
         lblTitle.AutoSize = True
-        lblTitle.Font = New Font("Segoe UI", 24, FontStyle.Bold)
+        lblTitle.Font = New Font("Segoe UI", 24F, FontStyle.Bold)
         lblTitle.ForeColor = Color.White
         lblTitle.Location = New Point(20, 20)
         lblTitle.Name = "lblTitle"
-        lblTitle.Size = New Size(450, 54)
+        lblTitle.Size = New Size(511, 65)
         lblTitle.TabIndex = 0
         lblTitle.Text = "Website Admin Panel"
         ' 
         ' pnlNavigation
         ' 
-        pnlNavigation.BackColor = Color.FromArgb(25, 12, 35)
+        pnlNavigation.BackColor = Color.FromArgb(CByte(25), CByte(12), CByte(35))
         pnlNavigation.Controls.Add(btnContact)
         pnlNavigation.Controls.Add(btnPortfolio)
         pnlNavigation.Controls.Add(btnCertification)
@@ -133,20 +132,20 @@ Partial Class Form1
         pnlNavigation.Dock = DockStyle.Top
         pnlNavigation.Location = New Point(0, 90)
         pnlNavigation.Name = "pnlNavigation"
-        pnlNavigation.Size = New Size(1280, 60)
+        pnlNavigation.Size = New Size(1383, 65)
         pnlNavigation.TabIndex = 1
         ' 
         ' btnContact
         ' 
         btnContact.BackColor = Color.Transparent
-        btnContact.FlatAppearance.BorderColor = Color.FromArgb(150, 80, 150)
+        btnContact.FlatAppearance.BorderColor = Color.FromArgb(CByte(150), CByte(80), CByte(150))
         btnContact.FlatAppearance.BorderSize = 2
         btnContact.FlatStyle = FlatStyle.Flat
-        btnContact.Font = New Font("Segoe UI", 11, FontStyle.Bold)
+        btnContact.Font = New Font("Segoe UI", 11F, FontStyle.Bold)
         btnContact.ForeColor = Color.White
-        btnContact.Location = New Point(330, 10)
+        btnContact.Location = New Point(573, 10)
         btnContact.Name = "btnContact"
-        btnContact.Size = New Size(100, 40)
+        btnContact.Size = New Size(122, 40)
         btnContact.TabIndex = 4
         btnContact.Text = "Contact"
         btnContact.UseVisualStyleBackColor = False
@@ -154,14 +153,14 @@ Partial Class Form1
         ' btnPortfolio
         ' 
         btnPortfolio.BackColor = Color.Transparent
-        btnPortfolio.FlatAppearance.BorderColor = Color.FromArgb(150, 80, 150)
+        btnPortfolio.FlatAppearance.BorderColor = Color.FromArgb(CByte(150), CByte(80), CByte(150))
         btnPortfolio.FlatAppearance.BorderSize = 2
         btnPortfolio.FlatStyle = FlatStyle.Flat
-        btnPortfolio.Font = New Font("Segoe UI", 11, FontStyle.Bold)
+        btnPortfolio.Font = New Font("Segoe UI", 11F, FontStyle.Bold)
         btnPortfolio.ForeColor = Color.White
-        btnPortfolio.Location = New Point(255, 10)
+        btnPortfolio.Location = New Point(446, 10)
         btnPortfolio.Name = "btnPortfolio"
-        btnPortfolio.Size = New Size(100, 40)
+        btnPortfolio.Size = New Size(121, 40)
         btnPortfolio.TabIndex = 3
         btnPortfolio.Text = "Portfolio"
         btnPortfolio.UseVisualStyleBackColor = False
@@ -169,14 +168,14 @@ Partial Class Form1
         ' btnCertification
         ' 
         btnCertification.BackColor = Color.Transparent
-        btnCertification.FlatAppearance.BorderColor = Color.FromArgb(150, 80, 150)
+        btnCertification.FlatAppearance.BorderColor = Color.FromArgb(CByte(150), CByte(80), CByte(150))
         btnCertification.FlatAppearance.BorderSize = 2
         btnCertification.FlatStyle = FlatStyle.Flat
-        btnCertification.Font = New Font("Segoe UI", 11, FontStyle.Bold)
+        btnCertification.Font = New Font("Segoe UI", 11F, FontStyle.Bold)
         btnCertification.ForeColor = Color.White
-        btnCertification.Location = New Point(160, 10)
+        btnCertification.Location = New Point(281, 10)
         btnCertification.Name = "btnCertification"
-        btnCertification.Size = New Size(100, 40)
+        btnCertification.Size = New Size(159, 40)
         btnCertification.TabIndex = 2
         btnCertification.Text = "Certification"
         btnCertification.UseVisualStyleBackColor = False
@@ -184,14 +183,14 @@ Partial Class Form1
         ' btnAbout
         ' 
         btnAbout.BackColor = Color.Transparent
-        btnAbout.FlatAppearance.BorderColor = Color.FromArgb(150, 80, 150)
+        btnAbout.FlatAppearance.BorderColor = Color.FromArgb(CByte(150), CByte(80), CByte(150))
         btnAbout.FlatAppearance.BorderSize = 2
         btnAbout.FlatStyle = FlatStyle.Flat
-        btnAbout.Font = New Font("Segoe UI", 11, FontStyle.Bold)
+        btnAbout.Font = New Font("Segoe UI", 11F, FontStyle.Bold)
         btnAbout.ForeColor = Color.White
-        btnAbout.Location = New Point(85, 10)
+        btnAbout.Location = New Point(178, 10)
         btnAbout.Name = "btnAbout"
-        btnAbout.Size = New Size(100, 40)
+        btnAbout.Size = New Size(97, 40)
         btnAbout.TabIndex = 1
         btnAbout.Text = "About"
         btnAbout.UseVisualStyleBackColor = False
@@ -199,39 +198,38 @@ Partial Class Form1
         ' btnDashboard
         ' 
         btnDashboard.BackColor = Color.Transparent
-        btnDashboard.FlatAppearance.BorderColor = Color.FromArgb(150, 80, 150)
+        btnDashboard.FlatAppearance.BorderColor = Color.FromArgb(CByte(150), CByte(80), CByte(150))
         btnDashboard.FlatAppearance.BorderSize = 2
         btnDashboard.FlatStyle = FlatStyle.Flat
-        btnDashboard.Font = New Font("Segoe UI", 11, FontStyle.Bold)
+        btnDashboard.Font = New Font("Segoe UI", 11F, FontStyle.Bold)
         btnDashboard.ForeColor = Color.White
-        btnDashboard.Location = New Point(10, 10)
+        btnDashboard.Location = New Point(20, 10)
         btnDashboard.Name = "btnDashboard"
-        btnDashboard.Size = New Size(100, 40)
+        btnDashboard.Size = New Size(152, 40)
         btnDashboard.TabIndex = 0
         btnDashboard.Text = "Dashboard"
         btnDashboard.UseVisualStyleBackColor = False
         ' 
         ' pnlContent
         ' 
-        pnlContent.BackColor = Color.FromArgb(25, 12, 35)
+        pnlContent.BackColor = Color.FromArgb(CByte(25), CByte(12), CByte(35))
         pnlContent.Dock = DockStyle.Fill
         pnlContent.ForeColor = Color.White
-        pnlContent.Location = New Point(0, 150)
+        pnlContent.Location = New Point(0, 155)
         pnlContent.Name = "pnlContent"
-        pnlContent.Size = New Size(1280, 550)
+        pnlContent.Size = New Size(1383, 583)
         pnlContent.TabIndex = 2
         ' 
         ' Form1
         ' 
         AutoScaleDimensions = New SizeF(10F, 25F)
         AutoScaleMode = AutoScaleMode.Font
-        BackColor = Color.FromArgb(25, 12, 35)
-        ClientSize = New Size(1280, 700)
+        BackColor = Color.FromArgb(CByte(25), CByte(12), CByte(35))
+        ClientSize = New Size(1383, 738)
         Controls.Add(pnlContent)
         Controls.Add(pnlNavigation)
         Controls.Add(pnlHeader)
         ForeColor = Color.White
-        Icon = CType(resources.GetObject("$this.Icon"), Icon)
         Name = "Form1"
         Text = "Website Admin Panel"
         pnlHeader.ResumeLayout(False)
