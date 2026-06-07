@@ -11,6 +11,9 @@ Public Class Form1
     Private Const SUPABASE_KEY As String = "sb_publishable_gmEmuBGVgPTU8-rP02HIzQ_E2R1Twfh"
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Tambahkan ini agar aplikasi tampil fullscreen dan terpusat
+        Me.WindowState = FormWindowState.Maximized
+
         ' 1. Inisialisasi API Service
         _apiService = New ApiService(SUPABASE_URL, SUPABASE_KEY)
 
@@ -73,7 +76,7 @@ Public Class Form1
 
     ' --- HALAMAN DINAMIS (KONEKSI SUPABASE) ---
 
-    Private Sub ShowDashboard()
+    Private Async Sub ShowDashboard()
         pnlContent.Controls.Clear()
         currentPage = "Dashboard"
 
@@ -86,18 +89,22 @@ Public Class Form1
             .Location = New Point(40, 40),
             .AutoSize = True
         }
-        panel.Controls.Add(titleLabel)
+        AddControlToCenterPanel(panel, titleLabel)
 
-        ' Untuk stats, nanti kamu bisa buat endpoint counter atau passing jumlah list .Count ke sini
-        Dim statPanel1 = CreateStatCard("About Photos", "3", New Point(40, 120))
-        Dim statPanel2 = CreateStatCard("Certifications", "...", New Point(320, 120))
-        Dim statPanel3 = CreateStatCard("Portfolio Projects", "...", New Point(600, 120))
-        Dim statPanel4 = CreateStatCard("Messages", "...", New Point(880, 120))
+        ' Untuk stats, hitung dari database
+        Dim certs = Await _apiService.GetCertificationsAsync()
+        Dim portfolios = Await _apiService.GetPortfoliosAsync()
+        Dim messages = Await _apiService.GetMessagesAsync()
 
-        panel.Controls.Add(statPanel1)
-        panel.Controls.Add(statPanel2)
-        panel.Controls.Add(statPanel3)
-        panel.Controls.Add(statPanel4)
+        Dim statPanel1 = CreateStatCard("About Photos", "3", New Point(40, 120)) ' Asumsi 3 untuk photo
+        Dim statPanel2 = CreateStatCard("Certifications", certs.Count.ToString(), New Point(320, 120))
+        Dim statPanel3 = CreateStatCard("Portfolio Projects", portfolios.Count.ToString(), New Point(600, 120))
+        Dim statPanel4 = CreateStatCard("Messages", messages.Count.ToString(), New Point(880, 120))
+
+        AddControlToCenterPanel(panel, statPanel1)
+        AddControlToCenterPanel(panel, statPanel2)
+        AddControlToCenterPanel(panel, statPanel3)
+        AddControlToCenterPanel(panel, statPanel4)
 
         Dim noteLabel = New Label With {
             .Text = "GA4_PROPERTY_ID belum diatur di environment Vercel.",
@@ -108,7 +115,7 @@ Public Class Form1
             .BackColor = Color.FromArgb(80, 40, 60),
             .Padding = New Padding(10)
         }
-        panel.Controls.Add(noteLabel)
+        AddControlToCenterPanel(panel, noteLabel)
 
         pnlContent.Controls.Add(panel)
     End Sub
@@ -122,11 +129,16 @@ Public Class Form1
 
         ' Tampilkan indikator loading sederhana
         Dim loadingLbl = New Label With {.Text = "Loading About data...", .Location = New Point(40, 100), .ForeColor = Color.Gray, .AutoSize = True}
-        panel.Controls.Add(loadingLbl)
+        AddControlToCenterPanel(panel, loadingLbl)
 
         ' Ambil data asli dari Supabase
         Dim aboutData = Await _apiService.GetAboutAsync()
-        panel.Controls.Remove(loadingLbl)
+        ' Kita ambil innerPanel jika BasePanel memiliki Controls
+        If panel.Controls.Count > 0 AndAlso TypeOf panel.Controls(0) Is Panel Then
+            panel.Controls(0).Controls.Remove(loadingLbl)
+        Else
+            panel.Controls.Remove(loadingLbl)
+        End If
 
         Dim titleLabel = New Label With {
             .Text = "About Settings",
@@ -135,12 +147,13 @@ Public Class Form1
             .Location = New Point(40, 40),
             .AutoSize = True
         }
-        panel.Controls.Add(titleLabel)
+        AddControlToCenterPanel(panel, titleLabel)
 
-        ' Membuat input field menggunakan helper generator
-        Dim titleTxt = CreateInput("Title:", aboutData.Title, 100, panel)
-        Dim descTxt = CreateInput("Lead:", aboutData.Lead, 180, panel, True)
-        Dim linkTxt = CreateInput("Resume URL:", aboutData.ResumeUrl, 350, panel)
+        ' Membuat input field menggunakan helper generator. Kita pass innerPanel
+        Dim innerPanelForInputs As Panel = If(panel.Controls.Count > 0 AndAlso TypeOf panel.Controls(0) Is Panel, panel.Controls(0), panel)
+        Dim titleTxt = CreateInput("Title:", aboutData.Title, 100, innerPanelForInputs)
+        Dim descTxt = CreateInput("Lead:", aboutData.Lead, 180, innerPanelForInputs, True)
+        Dim linkTxt = CreateInput("Resume URL:", aboutData.ResumeUrl, 350, innerPanelForInputs)
 
         ' Tombol Simpan
         Dim saveBtn = New Button With {
@@ -170,7 +183,7 @@ Public Class Form1
                                       saveBtn.Text = "💾 Save About"
                                   End Sub
 
-        panel.Controls.Add(saveBtn)
+        innerPanelForInputs.Controls.Add(saveBtn)
     End Function
 
     Private Async Function ShowCertification() As Task
@@ -187,11 +200,11 @@ Public Class Form1
             .Location = New Point(40, 40),
             .AutoSize = True
         }
-        panel.Controls.Add(titleLabel)
+        AddControlToCenterPanel(panel, titleLabel)
 
         Dim addBtn = New Button With {
             .Text = "➕ Tambah",
-            .Location = New Point(1100, 40),
+            .Location = New Point(1060, 40), ' Adjust location suitable for width 1200
             .Size = New Size(120, 45),
             .BackColor = Color.FromArgb(100, 150, 100),
             .ForeColor = Color.White,
@@ -199,7 +212,12 @@ Public Class Form1
             .Font = New Font("Segoe UI", 11, FontStyle.Bold),
             .Cursor = Cursors.Hand
         }
-        panel.Controls.Add(addBtn)
+
+        AddHandler addBtn.Click, Async Sub(s, e)
+                                     Await ShowCertificationForm(Nothing)
+                                 End Sub
+
+        AddControlToCenterPanel(panel, addBtn)
 
         ' Ambil list sertifikat asli dari Supabase
         Dim certs = Await _apiService.GetCertificationsAsync()
@@ -208,7 +226,23 @@ Public Class Form1
         For Each cert In certs
             Dim certPanel = CreateCertificateCard(cert.Title, cert.Issuer & " · " & cert.Year, cert.SortOrder, New Point(40, yPos))
 
-            ' Menambahkan tombol hapus di setiap kartu secara dinamis
+            ' Edit Button
+            Dim editBtn = New Button With {
+                .Text = "✏️ Edit",
+                .Location = New Point(830, 105),
+                .Size = New Size(80, 35),
+                .BackColor = Color.FromArgb(50, 100, 150),
+                .ForeColor = Color.White,
+                .FlatStyle = FlatStyle.Flat,
+                .Cursor = Cursors.Hand
+            }
+
+            Dim currentCert = cert ' Copy for closure
+            AddHandler editBtn.Click, Async Sub(s, e)
+                                          Await ShowCertificationForm(currentCert)
+                                      End Sub
+
+            ' Delete Button
             Dim delBtn = New Button With {
                 .Text = "🗑️ Delete",
                 .Location = New Point(930, 105),
@@ -220,14 +254,15 @@ Public Class Form1
             }
 
             AddHandler delBtn.Click, Async Sub()
-                                         If MessageBox.Show("Hapus sertifikat: " & cert.Title & "?", "Konfirmasi Hapus", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) = DialogResult.Yes Then
-                                             Await _apiService.DeleteCertificationAsync(cert.Id)
+                                         If MessageBox.Show("Hapus sertifikat: " & currentCert.Title & "?", "Konfirmasi Hapus", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) = DialogResult.Yes Then
+                                             Await _apiService.DeleteCertificationAsync(currentCert.Id)
                                              Await ShowCertification() ' Refresh halaman setelah menghapus
                                          End If
                                      End Sub
 
+            certPanel.Controls.Add(editBtn)
             certPanel.Controls.Add(delBtn)
-            panel.Controls.Add(certPanel)
+            AddControlToCenterPanel(panel, certPanel)
             yPos += 200
         Next
     End Function
@@ -246,14 +281,70 @@ Public Class Form1
             .Location = New Point(40, 40),
             .AutoSize = True
         }
-        panel.Controls.Add(titleLabel)
+        AddControlToCenterPanel(panel, titleLabel)
+
+        Dim addBtn = New Button With {
+            .Text = "➕ Tambah",
+            .Location = New Point(1060, 40), ' Adjust location suitable for width 1200
+            .Size = New Size(120, 45),
+            .BackColor = Color.FromArgb(100, 150, 100),
+            .ForeColor = Color.White,
+            .FlatStyle = FlatStyle.Flat,
+            .Font = New Font("Segoe UI", 11, FontStyle.Bold),
+            .Cursor = Cursors.Hand
+        }
+
+        AddHandler addBtn.Click, Async Sub(s, e)
+                                     Await ShowPortfolioForm(Nothing)
+                                 End Sub
+
+        AddControlToCenterPanel(panel, addBtn)
 
         Dim portfolios = Await _apiService.GetPortfoliosAsync()
 
         Dim yPos = 130
         For Each item In portfolios
             Dim projectPanel = CreateProjectCard(item.Title, item.Description, New Point(40, yPos))
-            panel.Controls.Add(projectPanel)
+
+            ' Edit Button
+            Dim editBtn = New Button With {
+                .Text = "✏️ Edit",
+                .Location = New Point(830, 20),
+                .Size = New Size(80, 35),
+                .BackColor = Color.FromArgb(50, 100, 150),
+                .ForeColor = Color.White,
+                .FlatStyle = FlatStyle.Flat,
+                .Cursor = Cursors.Hand
+            }
+
+            Dim currentPortfolio = item
+            AddHandler editBtn.Click, Async Sub(s, e)
+                                          Await ShowPortfolioForm(currentPortfolio)
+                                      End Sub
+
+            ' Delete Button
+            Dim delBtn = New Button With {
+                .Text = "🗑️ Delete",
+                .Location = New Point(930, 20),
+                .Size = New Size(80, 35),
+                .BackColor = Color.FromArgb(150, 50, 50),
+                .ForeColor = Color.White,
+                .FlatStyle = FlatStyle.Flat,
+                .Cursor = Cursors.Hand
+            }
+
+            AddHandler delBtn.Click, Async Sub()
+                                         If MessageBox.Show("Hapus project: " & currentPortfolio.Title & "?", "Konfirmasi Hapus", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) = DialogResult.Yes Then
+                                             ' Note: Buat metode DeletePortfolioAsync 
+                                             MessageBox.Show("Metode Hapus Portfolio belum tersedia di API Service.", "Belum Tersedia", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                             ' Await _apiService.DeletePortfolioAsync(currentPortfolio.Id)
+                                             ' Await ShowPortfolio() ' Refresh halaman setelah menghapus
+                                         End If
+                                     End Sub
+
+            projectPanel.Controls.Add(editBtn)
+            projectPanel.Controls.Add(delBtn)
+            AddControlToCenterPanel(panel, projectPanel)
             yPos += 180
         Next
     End Function
@@ -272,27 +363,207 @@ Public Class Form1
             .Location = New Point(40, 40),
             .AutoSize = True
         }
-        panel.Controls.Add(titleLabel)
+        AddControlToCenterPanel(panel, titleLabel)
 
         Dim messages = Await _apiService.GetMessagesAsync()
 
         Dim yPos = 120
         For Each msg In messages
             Dim msgPanel = CreateMessageCard(msg.Name, msg.Email, msg.Message, New Point(40, yPos))
-            panel.Controls.Add(msgPanel)
+            AddControlToCenterPanel(panel, msgPanel)
             yPos += 180
         Next
+    End Function
+
+    ' --- FORMS MANAJEMEN DATA ---
+
+    Private Async Function ShowCertificationForm(cert As CertificationModel) As Task
+        pnlContent.Controls.Clear()
+
+        Dim isEdit As Boolean = cert IsNot Nothing
+        If cert Is Nothing Then cert = New CertificationModel()
+
+        Dim panel = CreateBasePanel()
+        pnlContent.Controls.Add(panel)
+
+        Dim titleLabel = New Label With {
+            .Text = If(isEdit, "✏️ Edit Sertifikat", "➕ Tambah Sertifikat"),
+            .Font = New Font("Segoe UI", 18, FontStyle.Bold),
+            .ForeColor = Color.White,
+            .Location = New Point(40, 40),
+            .AutoSize = True
+        }
+        AddControlToCenterPanel(panel, titleLabel)
+
+        Dim innerPanelForInputs As Panel = If(panel.Controls.Count > 0 AndAlso TypeOf panel.Controls(0) Is Panel, panel.Controls(0), panel)
+
+        ' Membuat input field menggunakan helper generator
+        Dim titleTxt = CreateInput("Judul Sertifikat:", cert.Title, 100, innerPanelForInputs)
+        Dim issuerTxt = CreateInput("Penerbit (Issuer):", cert.Issuer, 180, innerPanelForInputs)
+        Dim yearTxt = CreateInput("Tahun (Year):", cert.Year, 260, innerPanelForInputs)
+
+        ' Tombol Simpan
+        Dim saveBtn = New Button With {
+            .Text = "💾 Simpan",
+            .Location = New Point(40, 340),
+            .Size = New Size(240, 45),
+            .BackColor = Color.FromArgb(150, 80, 150),
+            .ForeColor = Color.White,
+            .FlatStyle = FlatStyle.Flat,
+            .Font = New Font("Segoe UI", 12, FontStyle.Bold),
+            .Cursor = Cursors.Hand
+        }
+
+        Dim cancelBtn = New Button With {
+            .Text = "❌ Batal",
+            .Location = New Point(300, 340),
+            .Size = New Size(240, 45),
+            .BackColor = Color.FromArgb(80, 80, 80),
+            .ForeColor = Color.White,
+            .FlatStyle = FlatStyle.Flat,
+            .Font = New Font("Segoe UI", 12, FontStyle.Bold),
+            .Cursor = Cursors.Hand
+        }
+
+        AddHandler cancelBtn.Click, Async Sub()
+                                        Await ShowCertification()
+                                    End Sub
+
+        ' Note: Untuk update belum ada methodnya di API service, implementasikan sesuai kebutuhan
+        ' Sementara ini hanya membuat UI dan Create 
+        AddHandler saveBtn.Click, Async Sub()
+                                      saveBtn.Enabled = False
+                                      cert.Title = titleTxt.Text
+                                      cert.Issuer = issuerTxt.Text
+                                      cert.Year = yearTxt.Text
+
+                                      Dim success As Boolean = False
+                                      If Not isEdit Then
+                                          Dim result = Await _apiService.CreateCertificationAsync(cert)
+                                          success = result IsNot Nothing
+                                      Else
+                                          MessageBox.Show("Metode Edit Sertifikat belum tersedia di API Service. Buatlah API update pada Service.", "Belum Tersedia", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+                                          ' Contoh jika sudah dibuat:
+                                          ' success = Await _apiService.UpdateCertificationAsync(cert)
+                                          saveBtn.Enabled = True
+                                          Exit Sub
+                                      End If
+
+                                      MessageBox.Show(If(success, "Data Sertifikat berhasil disimpan!", "Gagal menyimpan data."))
+                                      Await ShowCertification()
+                                  End Sub
+
+        innerPanelForInputs.Controls.Add(saveBtn)
+        innerPanelForInputs.Controls.Add(cancelBtn)
+    End Function
+
+    Private Async Function ShowPortfolioForm(portfolio As PortfolioModel) As Task
+        pnlContent.Controls.Clear()
+
+        Dim isEdit As Boolean = portfolio IsNot Nothing
+        If portfolio Is Nothing Then portfolio = New PortfolioModel()
+
+        Dim panel = CreateBasePanel()
+        pnlContent.Controls.Add(panel)
+
+        Dim titleLabel = New Label With {
+            .Text = If(isEdit, "✏️ Edit Project", "➕ Tambah Project"),
+            .Font = New Font("Segoe UI", 18, FontStyle.Bold),
+            .ForeColor = Color.White,
+            .Location = New Point(40, 40),
+            .AutoSize = True
+        }
+        AddControlToCenterPanel(panel, titleLabel)
+
+        Dim innerPanelForInputs As Panel = If(panel.Controls.Count > 0 AndAlso TypeOf panel.Controls(0) Is Panel, panel.Controls(0), panel)
+
+        ' Membuat input field menggunakan helper generator
+        Dim titleTxt = CreateInput("Judul Project:", portfolio.Title, 100, innerPanelForInputs)
+        Dim descTxt = CreateInput("Deskripsi:", portfolio.Description, 180, innerPanelForInputs, True)
+
+        ' Tombol Simpan
+        Dim saveBtn = New Button With {
+            .Text = "💾 Simpan",
+            .Location = New Point(40, 340),
+            .Size = New Size(240, 45),
+            .BackColor = Color.FromArgb(150, 80, 150),
+            .ForeColor = Color.White,
+            .FlatStyle = FlatStyle.Flat,
+            .Font = New Font("Segoe UI", 12, FontStyle.Bold),
+            .Cursor = Cursors.Hand
+        }
+
+        Dim cancelBtn = New Button With {
+            .Text = "❌ Batal",
+            .Location = New Point(300, 340),
+            .Size = New Size(240, 45),
+            .BackColor = Color.FromArgb(80, 80, 80),
+            .ForeColor = Color.White,
+            .FlatStyle = FlatStyle.Flat,
+            .Font = New Font("Segoe UI", 12, FontStyle.Bold),
+            .Cursor = Cursors.Hand
+        }
+
+        AddHandler cancelBtn.Click, Async Sub()
+                                        Await ShowPortfolio()
+                                    End Sub
+
+        ' Note: Untuk update belum ada methodnya di API service, implementasikan sesuai kebutuhan
+        ' Sementara ini hanya membuat UI dan Create 
+        AddHandler saveBtn.Click, Async Sub()
+                                      saveBtn.Enabled = False
+                                      portfolio.Title = titleTxt.Text
+                                      portfolio.Description = descTxt.Text
+
+                                      Dim success As Boolean = False
+                                      Dim msg = "Penyimpanan untuk model portfolio belum tersedia di backend/API service."
+
+                                      MessageBox.Show(msg, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                      saveBtn.Enabled = True
+
+                                  End Sub
+
+        innerPanelForInputs.Controls.Add(saveBtn)
+        innerPanelForInputs.Controls.Add(cancelBtn)
     End Function
 
     ' --- UTILITY & GENERIC GENERATORS ---
 
     Private Function CreateBasePanel() As Panel
-        Return New Panel With {
+        ' Gunakan Center Panel untuk membuat layout di tengah di layat full screen
+        Dim outerPanel = New Panel With {
             .Dock = DockStyle.Fill,
             .AutoScroll = True,
             .BackColor = Color.FromArgb(25, 12, 35)
         }
+
+        ' Membuat panel dalam yang terpusat yang memiliki lebar fix maksimal
+        Dim innerPanel = New Panel With {
+            .Width = 1200,
+            .AutoSize = True,
+            .AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            .MinimumSize = New Size(1200, 800),
+            .BackColor = Color.FromArgb(25, 12, 35)
+        }
+
+        ' Memastikan posisinya ditengah
+        AddHandler outerPanel.Resize, Sub(s, e)
+                                          innerPanel.Left = (outerPanel.ClientSize.Width - innerPanel.Width) \ 2
+                                      End Sub
+
+        outerPanel.Controls.Add(innerPanel)
+        Return outerPanel
     End Function
+
+    ' Helper untuk mendapatkan innerPanel agar controls ditambah di tengah, bukan di OuterPanel
+    Private Sub AddControlToCenterPanel(basePanel As Panel, control As Control)
+        If basePanel.Controls.Count > 0 AndAlso TypeOf basePanel.Controls(0) Is Panel Then
+            basePanel.Controls(0).Controls.Add(control)
+        Else
+            basePanel.Controls.Add(control)
+        End If
+    End Sub
 
     Private Function CreateInput(labelText As String, value As String, yPos As Integer, parent As Panel, Optional isMultiline As Boolean = False) As TextBox
         Dim lbl = New Label With {.Text = labelText, .Location = New Point(40, yPos), .AutoSize = True, .Font = New Font("Segoe UI", 11), .ForeColor = Color.White}
